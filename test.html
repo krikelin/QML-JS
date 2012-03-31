@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Segura test</title>
+		<title>Introducing Segura!</title>
 		<script src="segura-0.2.8.js" type="text/javascript"></script>
 		<script type="text/javascript">
 			function init () {
-				var query = "QML is a #language #invented by @alexandr #year 2009.";
+				var query = "QML is a markup #language #invented by @alexandr, #year *2012.";
 				var element = new QmlDocument(query);
 				console.log(element);
-				//document.getElementById(query).appendChild(element.documentElement.node);
+				console.log(element.documentElement.data);
 			};
 		</script>
 	</head>

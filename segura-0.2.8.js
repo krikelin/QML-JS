@@ -16,6 +16,15 @@ function QmlNode () {
 	this._tag = "";
 	this._content = "";
 	this._type = "";
+	this.__defineGetter__("type", function () {
+		return this._type;
+	});
+	this.__defineSetter__("type", function (val) {
+		 this._type = val;
+	});
+	this.__defineGetter__("children", function () {
+		return this._children;
+	});
 	this.__defineGetter__("tag", function() {
 		return this._tag;
 	});
@@ -24,10 +33,50 @@ function QmlNode () {
 	});
 	this.__defineSetter__("tag", function(val) {
 		this._tag = val;
+		console.log("C");
+		this.node.innerHTML = "<b> " + this._tag + "</b>" + this._content + "</b>";
+		console.log(this.node);
 	});
 	this.__defineSetter__("content", function(val) {
 		this._content = val;
-		this.node.innerHTML = "<b> " + this._tag + "</b>" + this._content + "</b";
+		this.node.innerHTML = "<b> " + this._tag + "</b>" + this._content + "</b>";
+		console.log(this.node);
+	});
+	this.__defineGetter__("data", function() {
+		var rootData = {};
+		var curData = {};
+		var curObject = this;
+		this.it = 0;
+		
+		var curData = rootData;
+		var i = 0;
+		while(true) {
+			
+			if(curObject.children.length < 1 || curObject.it >  curObject.children.length - 1) {
+				if(typeof curObject.parent == "undefined") {
+					break;
+				}
+				curObject = curObject.parent;
+				curData = curData["parent"];
+				continue;
+			} else {
+				
+				if(curObject["it"] === undefined || isNaN(curObject["it"])) {
+					
+					curObject.it = 0;
+				
+				}
+				curObject = curObject.children[curObject.it];			
+				curObject.it++;
+			}
+		
+			curData[curObject.tag] = curObject.content;
+			
+			
+			
+			
+		}
+		return curData;
 	});
    
 	this.node = document.createElement("li");
@@ -82,6 +131,7 @@ function QmlDocument(text) {
 			case '*':
 				if(mode == QmlMode.SPACE) {
 					currentNode.type = token;
+		
 				//	console.log("F");
 					// TODO add things here
 					mode = QmlMode.CONTENT;
@@ -95,7 +145,7 @@ function QmlDocument(text) {
 				if (currentNode != null) {
 						
 					currentNode._children.push(child);
-					child._parent = currentNode._parent;
+					child._parent = currentNode;
 				}
 				currentNode = child;
 				child.type = token;
@@ -123,8 +173,9 @@ function QmlDocument(text) {
 					//	console.log("A");
 						if((token == '.' || token == ' ' || token == ',') && !inString) {
 							// End the content
-							if(this.currentNode != null) {
-								this.currentNode = this.currentNode._parent;
+							if(currentNode != null) {
+								console.log("PARENT");
+								currentNode = currentNode._parent;
 							}
 							mode = QmlMode.IDLE;
 							break;
