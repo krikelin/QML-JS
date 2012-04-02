@@ -7,6 +7,14 @@
 			function init () {
 				var query = "QML is a markup #language #invented by @alexandr, #year *2012.";
 				var element = new QmlDocument(query);
+				var level = 0;
+				element.observe(models.EVENT.NEWNODE, function(data) {
+					console.log(data);
+					
+					document.write( (data.level > level ? "{" : "") + " {" + data.node.tag + ": \"" + data.node.content + "\"}" + (data.level < level ? "}" : ",") );
+					level = data.level;
+				});
+				element.parse();
 				console.log(element);
 				console.log(element.documentElement.data);
 			};
