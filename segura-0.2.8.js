@@ -14,7 +14,16 @@ function QmlNode () {
 	this._children = [];
 	this._parent = null;
 	this._tag = "";
+	this._adjective = "";
 	this._content = "";
+	this._attribute = "";
+	this.__defineGetter__("attribute", function() {
+		return this._attribute;
+	});
+	this.__defineSetter__("attribute", function (val) {
+		this._attribute = val;
+	});
+	
 	this._type = "";
 	this.__defineGetter__("type", function () {
 		return this._type;
@@ -86,7 +95,8 @@ var QmlMode = {
 	IDLE : 0,
 	ENTITY : 1,
 	SPACE : 2,
-	CONTENT : 3
+	ATTRIBUTE: 3,
+	CONTENT : 4
 };
 /********
 QML Document object
@@ -107,9 +117,11 @@ function QmlDocument(text) {
 	@function 
 	**********/
 	this.parse = function () {
-		
+		var currentAttributes = [];
+		var currrentAttribute = "";
 		var text = this._text;
 		var inString = false;
+		var preMode = 0;
 		var mode = QmlMode.IDLE;
 		var currentNode = this.documentElement;
 		currentNode.parent = this;
@@ -122,6 +134,15 @@ function QmlDocument(text) {
 				inString = !inString;
 				break;
 			// All value tokens
+			case ':':
+				// Attribute case
+				if (!inString) {
+					if(currentNode != null) {
+						preMode = mode; 				// Set pre mode to fall back to after attribute is ended
+						mode = QmlMode.ATTRIBUTE;		// Set mode to attribute						
+					}
+				}
+				break;
 			case '@':
 			case '^':
 			case '¤':
@@ -132,7 +153,7 @@ function QmlDocument(text) {
 				if(mode == QmlMode.SPACE) {
 					currentNode.type = token;
 		
-				//	console.log("F");
+					console.log("F");
 					// TODO add things here
 					mode = QmlMode.CONTENT;
 				}
@@ -142,6 +163,8 @@ function QmlDocument(text) {
 				
 				// create new child
 				var child = new QmlNode();
+				child.attribute = this.currentAttribute;
+				currentAttribute = "";
 				if (currentNode != null) {
 						
 					currentNode._children.push(child);
@@ -154,8 +177,15 @@ function QmlDocument(text) {
 				break;
 			default:
 			//	console.log(mode);
-				console.log(mode);
+				console.log("CF " +mode);
 				switch(mode) {
+					case QmlMode.ATTRIBUTE:
+						if((token == ' ') && !inString) {
+							mode = preMode;
+							break;
+						}
+						currentAttribute += token;
+						break;
 					case QmlMode.ENTITY:
 						console.log(token + mode);
 				//		console.log("sF");
@@ -170,9 +200,10 @@ function QmlDocument(text) {
 						
 						break;
 					case QmlMode.CONTENT:	
-					//	console.log("A");
+						console.log("CONTENT");
 						if((token == '.' || token == ' ' || token == ',') && !inString) {
 							// End the content
+						
 							if(currentNode != null) {
 								console.log("PARENT");
 								currentNode = currentNode._parent;
