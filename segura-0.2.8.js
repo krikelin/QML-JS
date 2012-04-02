@@ -10,6 +10,54 @@ the rights to use, copy, modify, merge, publish, distribute, sublicense,
 and/or sell copies of the Software, and to permit persons to whom the
 Software is furnished to do so, subject to the following conditions:
 *****/
+/***
+@module Models
+**/
+models = function() {}
+models.prototype = new Object();
+/***
+An event
+***/
+models.prototype.Event = function(type, callback) {
+	this._type = type;
+	this._callback = callback;
+	this.__defineGetter__("type", function () {
+		return this._type;
+	});
+	this.__defineGetter__("callback", function () {
+		return this._callback;
+	});
+	
+	
+};
+/**
+An observable
+***/
+models.prototype.Observable = function () {
+	this._observers = [];
+	this.__defineGetter__("observers", function () {
+		return this._observers;
+	});
+	this.observe = function(type, callback) {	
+		var event = new models.Event(type, callback);
+		this.observers.push(event);
+	};
+	this.notify = function(event, data) {
+		for(var i = 0; i < this._observers.length; i++) {
+			var observer = this._observers[i];
+			console.log(observer);
+			if(observer.type == event) {
+				observer.callback(data); // Fire the callback	
+			}
+		}
+	};
+};
+var models = new models();
+models.EVENT = {
+	NEWNODE : 1,
+	STRING : 2
+};
+
 function QmlNode () {
 	this._children = [];
 	this._parent = null;
@@ -98,13 +146,30 @@ var QmlMode = {
 	ATTRIBUTE: 3,
 	CONTENT : 4
 };
+/***
+QMLEventArgs
+@class
+*/
+function QmlEventArgs(node, level) {
+	
+	this._node = node;
+	this._level = level;
+	this.__defineGetter__("level", function () {
+		return this._level;
+	});
+	this.__defineGetter__("node", function () {
+		return this._node;
+	});
+}
+QmlDocument.prototype = new models.Observable();
 /********
 QML Document object
 @class
 ********/
-function QmlDocument(text) {
+function QmlDocument(text, callback) {
 	this._text = text;
 	this.documentElement = new QmlNode();
+	
 	this.__defineGetter__("text", function () {
 		return this._text;
 	});
@@ -112,9 +177,18 @@ function QmlDocument(text) {
 		this._text = val;
 		this.parse();
 	});
+	this._callback = callback;
+	this.__defineGetter__("callback", function () {
+		return this._callback;
+	});
+	this.__defineSetter__("callback", function (val) {
+		this._callback = val;
+	});
+	var level = 0;
 	/**********
 	Parses a file
 	@function 
+	@param callback A callback raised when entering a level, allows for event integration
 	**********/
 	this.parse = function () {
 		var currentAttributes = [];
@@ -159,6 +233,7 @@ function QmlDocument(text) {
 				}
 				break;
 			case '#': 
+				level++;
 				mode = QmlMode.ENTITY;
 				
 				// create new child
@@ -193,6 +268,7 @@ function QmlDocument(text) {
 							mode = QmlMode.SPACE;
 							console.log(mode);
 							console.log(token);
+							
 							break;
 						}
 						
@@ -206,7 +282,14 @@ function QmlDocument(text) {
 						
 							if(currentNode != null) {
 								console.log("PARENT");
+								
+								// Raise callback
+								var qmlEventArgs = new QmlEventArgs(currentNode, level);
+								this.notify(models.EVENT.NEWNODE, qmlEventArgs);
+								level--;	
+								
 								currentNode = currentNode._parent;
+								
 							}
 							mode = QmlMode.IDLE;
 							break;
@@ -228,5 +311,4 @@ function QmlDocument(text) {
 			}
 		}
 	};
-	this.parse();
 }
