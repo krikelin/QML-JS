@@ -1,0 +1,43 @@
+/**
+QML Peg.js definition
+Copyright(C) 2012 Alexander Forselius
+
+Permission is hereby granted, free of charge, to any person obtaining a 
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+**/
+document 
+= documentElement: setence {
+	return documentElement
+}
+
+ws
+= [" "]
+
+entity
+= prefix:"@" name:word {
+	return {
+		word:name,
+		type:prefix
+	}
+}
+
+word 
+= word:[a-zA-Z0-9]+ {
+	return word.join("");
+}
+
+setence
+= _ entity:entity  children:(ws (setence / word)+)? end:"." {
+	return {
+		type:entity,
+		children:children
+	}
+}
+
+_
+
+= (ws)*
